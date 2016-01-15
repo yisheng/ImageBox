@@ -4,12 +4,14 @@ var fs = require('fs-plus')
 var path = require('path')
 var md5File = require('md5-file')
 var PouchDB = require('pouchdb');
+PouchDB.plugin(require('pouchdb-find'))
 var tinify = require('tinify')
 tinify.key = '_z1t0k4bk8k8pU0lBu9QUWZM8K16QSKR'
 
-const FILE_SCHEME = 'file://'
-const MD5_SCHEME  = 'md5://'
+const FILE_SCHEME = 'file/'
+const MD5_SCHEME  = 'md5/'
 
+var db = new PouchDB('./database/')
 var config = {
   path: '/Users/yisheng/Downloads/images/'
 }
@@ -23,9 +25,16 @@ if (!fs.isDirectorySync(config.path)) {
   return
 }
 
-var db = new PouchDB('database')
+// 创建数据库索引
+db.createIndex({
+  index: {
+    fields: ['isTinified']
+  }
+}).catch(function (error) {
+  console.error(error)
+});
 
-initIndex()
+// initIndex()
 
 function initIndex() {
   db.allDocs({
@@ -49,13 +58,14 @@ function initIndex() {
         var stats = fs.statSync(filePath)
         toAdd.push({
           _id: FILE_SCHEME + filePath,
-          mtime: stats.mtime
+          mtime: stats.mtime,
+          isTinified: Math.random() > 0.5
         })
       }
     })
     return db.bulkDocs(toAdd)
   // }).then(function(results) {
-  //   return db.allDocs()
+  //   return db.allDocs({include_docs: true})
   // }).then(function(results) {
   //   console.log(JSON.stringify(results))
   }).catch(function(err) {
@@ -94,28 +104,16 @@ function watch() {
   })
 }
 
-function indexing() {
-  var fileList = walk(config.path);
-  console.log(fileList);
-}
-
-function walk(path) {
-  var fileList = [];
-  function walking(path) {
-    var dirList = fs.readdirSync(path);
-    console.log(dirList);
-    dirList.forEach(function(item) {
-      if(fs.statSync(path + '/' + item).isDirectory()){
-        walking(path + '/' + item);
-      }else{
-        fileList.push(path + '/' + item);
-      }
-    })
-  }
-
-  walking(path);
-
-  return fileList;
+function tinify() {
+  db.find({
+    selector: {
+      isTinified: true
+    }
+  }).then(function(results) {
+    console.log(results)
+  }).catch(function(error) {
+    console.error(error)
+  })
 }
 
 function isFileSupported(filename) {

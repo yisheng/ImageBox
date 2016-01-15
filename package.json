@@ -8,6 +8,7 @@
     "md5-file": "^2.0.4",
     "menubar": "^3.0.0",
     "pouchdb": "^5.2.0",
+    "pouchdb-find": "^0.8.0",
     "tinify": "^1.1.1"
   },
   "main": "main.js",
