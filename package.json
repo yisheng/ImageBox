@@ -7,6 +7,7 @@
     "leveldown": "^1.4.3",
     "md5-file": "^2.0.4",
     "menubar": "^3.0.0",
+    "nedb": "^1.6.0",
     "pouchdb": "^5.2.0",
     "pouchdb-find": "^0.8.0",
     "tinify": "^1.1.1"
