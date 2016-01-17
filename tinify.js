@@ -3,15 +3,15 @@
 var fs = require('fs-plus')
 var path = require('path')
 var md5File = require('md5-file')
-var PouchDB = require('pouchdb');
-PouchDB.plugin(require('pouchdb-find'))
+var NeDB = require('nedb')
 var tinify = require('tinify')
 tinify.key = '_z1t0k4bk8k8pU0lBu9QUWZM8K16QSKR'
 
-const FILE_SCHEME = 'file/'
-const MD5_SCHEME  = 'md5/'
+const STATUS_PENDING  = 'pending'
+const STATUS_TINIFIED = 'tinified'
+const STATUS_EXPIRED  = 'expired'
 
-var db = new PouchDB('./database/')
+var db = {}
 var config = {
   path: '/Users/yisheng/Downloads/images/'
 }
@@ -25,51 +25,42 @@ if (!fs.isDirectorySync(config.path)) {
   return
 }
 
-// 创建数据库索引
-db.createIndex({
-  index: {
-    fields: ['isTinified']
-  }
-}).catch(function (error) {
-  console.error(error)
-});
-
+initDB()
 // initIndex()
+doTinify()
+
+function initDB() {
+  var dbFilePath = 'database/file.db'
+  var dbMd5Path = 'database/md5.db'
+
+  if (fs.isFileSync(dbFilePath)) {
+    // fs.unlinkSync(dbFilePath)
+  }
+
+  db.file = new NeDB({
+    filename: dbFilePath,
+    autoload: true,
+    timestampData: true
+  })
+
+  db.md5 = new NeDB({
+    filename: dbMd5Path,
+    autoload: true,
+    timestampData: true
+  })
+}
 
 function initIndex() {
-  db.allDocs({
-    include_docs: true,
-    startkey: FILE_SCHEME
-  }).then(function(results) {
-    // 清除历史文件记录
-    var toDelete = []
-    results.rows.forEach(function(row) {
-      var doc = row.doc
-      doc._deleted = true
-      toDelete.push(doc)
-    })
-    return db.bulkDocs(toDelete)
-  }).then(function(results) {
-    // 重新索引文件
-    var files = fs.listTreeSync(config.path)
-    var toAdd = [];
-    files.forEach(function(filePath) {
-      if (isFileSupported(filePath)) {
-        var stats = fs.statSync(filePath)
-        toAdd.push({
-          _id: FILE_SCHEME + filePath,
-          mtime: stats.mtime,
-          isTinified: Math.random() > 0.5
-        })
-      }
-    })
-    return db.bulkDocs(toAdd)
-  // }).then(function(results) {
-  //   return db.allDocs({include_docs: true})
-  // }).then(function(results) {
-  //   console.log(JSON.stringify(results))
-  }).catch(function(err) {
-    console.error(err)
+  var files = fs.listTreeSync(config.path)
+  files.forEach(function(filePath) {
+    if (isFileSupported(filePath)) {
+      var stats = fs.statSync(filePath)
+      db.file.insert({
+        path: filePath,
+        mtime: stats.mtime,
+        status: STATUS_PENDING
+      })
+    }
   })
 }
 
@@ -104,15 +95,16 @@ function watch() {
   })
 }
 
-function tinify() {
-  db.find({
-    selector: {
-      isTinified: true
+function doTinify() {
+  db.file.find({
+    status: STATUS_PENDING
+  }).sort({
+    mtime: -1
+  }).limit(1).exec(function(err, docs) {
+    console.log(docs)
+    if (docs.length) {
+
     }
-  }).then(function(results) {
-    console.log(results)
-  }).catch(function(error) {
-    console.error(error)
   })
 }
 
