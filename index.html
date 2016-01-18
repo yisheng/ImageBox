@@ -3,6 +3,13 @@
     <title>Play Image</title>
   </head>
   <body>
-    asdf
+    asdfx
+
+    <script>
+    require('electron').ipcRenderer.on('ping', function(event, message) {
+      console.log(event)
+      console.log(message)
+    })
+    </script>
   </body>
 </html>
