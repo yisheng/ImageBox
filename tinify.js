@@ -103,7 +103,7 @@ function doTinify() {
   db.file.find({
     status: STATUS_PENDING
   }).sort({
-    mtime: 1
+    mtime: -1
   }).limit(1).exec(function(err, files) {
     console.log(files)
     if (files.length <= 0) {
@@ -121,6 +121,17 @@ function tinifyFile(file) {
     doTinify()
     return
   }
+
+  var md5 = md5File(file.path)
+  db.md5.find({
+    md5: md5
+  }).limit(1).exec(function(err, files) {
+    if (files.length > 0) {
+      db.file.update({_id: file._id}, {status: STATUS_TINIFIED, toSize: file.fromSize})
+      doTinify()
+      return
+    }
+  })
 
   fs.readFile(file.path, function(err, sourceData) {
     if (err) {
@@ -141,6 +152,12 @@ function tinifyFile(file) {
         }
 
         db.file.update({_id: file._id}, {status: STATUS_TINIFIED, toSize: resultData.length})
+
+        var md5 = md5File(file.path)
+        db.md5.insert({
+          md5: md5,
+          size: resultData.length
+        })
 
         doTinify()
       })
