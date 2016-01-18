@@ -9,12 +9,14 @@ tinify.key = '_z1t0k4bk8k8pU0lBu9QUWZM8K16QSKR'
 
 const STATUS_PENDING  = 'pending'
 const STATUS_TINIFIED = 'tinified'
+const STATUS_TINIFYING = 'tinifying'
 const STATUS_EXPIRED  = 'expired'
 
 var db = {}
 var config = {
   path: '/Users/yisheng/Downloads/images/'
 }
+var isTinifying = false
 
 if (!fs.existsSync(config.path)) {
   console.error(config.path + ' not existed.');
@@ -26,7 +28,7 @@ if (!fs.isDirectorySync(config.path)) {
 }
 
 initDB()
-// initIndex()
+initIndex()
 doTinify()
 
 function initDB() {
@@ -34,7 +36,7 @@ function initDB() {
   var dbMd5Path = 'database/md5.db'
 
   if (fs.isFileSync(dbFilePath)) {
-    // fs.unlinkSync(dbFilePath)
+    fs.unlinkSync(dbFilePath)
   }
 
   db.file = new NeDB({
@@ -58,7 +60,9 @@ function initIndex() {
       db.file.insert({
         path: filePath,
         mtime: stats.mtime,
-        status: STATUS_PENDING
+        status: STATUS_PENDING,
+        fromSize: stats.size,
+        toSize: 0
       })
     }
   })
@@ -99,45 +103,51 @@ function doTinify() {
   db.file.find({
     status: STATUS_PENDING
   }).sort({
-    mtime: -1
-  }).limit(1).exec(function(err, docs) {
-    console.log(docs)
-    if (docs.length) {
-
+    mtime: 1
+  }).limit(1).exec(function(err, files) {
+    console.log(files)
+    if (files.length <= 0) {
+      isTinifying = false
+      return
+    } else {
+      tinifyFile(files[0])
     }
+  })
+}
+
+function tinifyFile(file) {
+  if (!fs.isFileSync(file.path)) {
+    db.file.update({_id: file._id}, {status: STATUS_EXPIRED})
+    doTinify()
+    return
+  }
+
+  fs.readFile(file.path, function(err, sourceData) {
+    if (err) {
+      console.error(err)
+      return
+    }
+
+    tinify.fromBuffer(sourceData).toBuffer(function(err, resultData) {
+      if (err) {
+        console.error(err)
+        return
+      }
+
+      fs.writeFile(file.path, resultData, function(err) {
+        if (err) {
+          console.error(err)
+          return
+        }
+
+        db.file.update({_id: file._id}, {status: STATUS_TINIFIED, toSize: resultData.length})
+
+        doTinify()
+      })
+    })
   })
 }
 
 function isFileSupported(filename) {
   return ['.png', '.jpg', '.jpeg'].indexOf(path.extname(filename)) != -1
 }
-
-// var source = tinify.fromFile(path + 'a.png')
-// source.toFile(path + 'ab.png')
-
-
-/*
-fs.readFile(path + 'a.png', function(error, sourceData) {
-  if (error) {
-    throw error;
-  }
-
-  console.log('Compressing file');
-
-  tinify.fromBuffer(sourceData).toBuffer(function(error, resultData) {
-    if (error) {
-      throw error;
-    }
-
-    console.log('Writing file');
-
-    fs.writeFile(path + 'a+.png', resultData, (error) => {
-      if (error) {
-        throw error;
-      }
-
-      console.log('Done');
-    })
-  })
-})
-*/
