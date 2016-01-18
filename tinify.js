@@ -29,7 +29,8 @@ if (!fs.isDirectorySync(config.path)) {
 
 initDB()
 initIndex()
-doTinify()
+watch()
+// doTinify()
 
 function initDB() {
   var dbFilePath = 'database/file.db'
@@ -73,29 +74,43 @@ function watch() {
     "persistent": true,
     "recursive": true
   }
-  var watcher = fs.watch(config.path, watcherOptions, (event, filename) => {
+  var watcher = fs.watch(config.path, watcherOptions, function(event, filename) {
     if (!filename) {
       console.warn('Watcher doesn\'t return filename');
       return ;
     }
-    if (isFileSupported(filename)) {
-      // console.log(filename + ' is not an image');
+    if (!isFileSupported(filename)) {
+      console.log(filename + ' is not an image');
       return ;
     }
 
     console.log('File changed. Event: ' + event + ' Filename: ' + config.path + filename);
 
-    fs.stat(config.path + filename, (err, stats) => {
-      if (err) {
-        if (err.errno == -2) {
-          console.error(config.path + ' not existed.');
-        } else {
-          throw err;
+    var filePath = config.path + filename
+    if (fs.isFileSync(filePath)) {
+      db.file.find({
+        path: filePath
+      }).sort({
+        mtime: -1
+      }).limit(1).exec(function(err, files) {
+        var stats = fs.statSync(filePath)
+        var file = {
+          path: filePath,
+          mtime: stats.mtime,
+          status: STATUS_PENDING,
+          fromSize: stats.size,
+          toSize: 0
         }
-      }
-
-      return ;
-    })
+        if (files.length > 0) {
+          db.file.update({_id: files[0]._id}, file)
+        } else {
+          db.file.insert(file)
+        }
+      })
+    } else {
+      // Do nothing here
+      // Deleted files will be handled before being tinified
+    }
   })
 }
 
@@ -116,6 +131,14 @@ function doTinify() {
 }
 
 function tinifyFile(file) {
+  // TODO
+  var onError = function() {
+
+  }
+  var onSuccess = function() {
+
+  }
+
   if (!fs.isFileSync(file.path)) {
     db.file.update({_id: file._id}, {status: STATUS_EXPIRED})
     doTinify()
