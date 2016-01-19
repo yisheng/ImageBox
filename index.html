@@ -3,13 +3,34 @@
     <title>Play Image</title>
   </head>
   <body>
-    asdfx
+    <div id="file-list">
+      <ul>
+        <li v-for="file in fileList">
+          {{ file.path }}
+        </li>
+      </ul>
+    </div>
 
+    <script src="vue.js"></script>
     <script>
-    require('electron').ipcRenderer.on('ping', function(event, message) {
-      console.log(event)
-      console.log(message)
-    })
+      var model = {
+        fileList: [
+          {
+            path: '/Users/a.png'
+          },
+          {
+            path: '/Users/b.png'
+          }
+        ]
+      }
+      var vm = new Vue({
+        el: '#file-list',
+        data: model
+      })
+      require('electron').ipcRenderer.on('ping', function(event, message) {
+        console.log(event)
+        console.log(message)
+      })
     </script>
   </body>
 </html>

@@ -7,7 +7,8 @@
     "md5-file": "^2.0.4",
     "menubar": "^3.0.0",
     "nedb": "^1.6.0",
-    "tinify": "^1.1.1"
+    "tinify": "^1.1.1",
+    "vue": "^1.0.14"
   },
   "main": "main.js",
   "license": "MIT",
