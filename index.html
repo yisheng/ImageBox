@@ -14,22 +14,15 @@
     <script src="vue.js"></script>
     <script>
       var model = {
-        fileList: [
-          {
-            path: '/Users/a.png'
-          },
-          {
-            path: '/Users/b.png'
-          }
-        ]
+        fileList: []
       }
       var vm = new Vue({
         el: '#file-list',
         data: model
       })
-      require('electron').ipcRenderer.on('ping', function(event, message) {
-        console.log(event)
+      require('electron').ipcRenderer.on('files', function(event, message) {
         console.log(message)
+        model.fileList = message
       })
     </script>
   </body>
