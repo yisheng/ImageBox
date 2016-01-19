@@ -4,11 +4,13 @@
   </head>
   <body>
     <div id="file-list">
-      <ul>
+      <ol>
         <li v-for="file in fileList">
-          {{ file.path }}
+          {{ file.path }}<br />
+          {{ file.status }}<br />
+          {{ file.mtime }}
         </li>
-      </ul>
+      </ol>
     </div>
 
     <script src="vue.js"></script>
@@ -20,9 +22,10 @@
         el: '#file-list',
         data: model
       })
-      require('electron').ipcRenderer.on('files', function(event, message) {
-        console.log(message)
-        model.fileList = message
+
+      require('electron').ipcRenderer.on('files', function(event, files) {
+        model.fileList = files
+        console.log(files[0].mtime)
       })
     </script>
   </body>
