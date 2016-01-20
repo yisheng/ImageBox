@@ -61,7 +61,7 @@
             return path.dirname(string)
           },
           reduced: function(file) {
-            return file.toSize <= 0 ? '' : ((file.fromSize - file.toSize) / file.fromSize) * 100 + '%'
+            return file.toSize <= 0 ? '' : Math.round(((file.fromSize - file.toSize) / file.fromSize) * 100) + '%'
           }
         }
       })

@@ -27,11 +27,14 @@ fileTinify.on('tinified', function(file) {
 })
 
 fileFeed.on('change', function(message) {
-  console.log('FileTinify.js')
-  console.log(message)
   if (message.method == 'file-changed') {
     doTinify()
   }
+})
+
+fileFeed.on('skip', function(file) {
+  file.stopWatching = false
+  fileFeed.update({_id: file._id}, file)
 })
 
 doTinify()
@@ -67,6 +70,7 @@ function tinifyFile(file) {
   db.findOne({md5: sourceMd5}, function(err, existedMd5) {
     if (existedMd5) {
       file.status = STATUS_DONE
+      file.toSize = file.fromSize
       fileTinify.emit('tinified', file)
       return
     }
@@ -89,17 +93,20 @@ function tinifyFile(file) {
         md5: resultMd5,
         size: resultData.length
       }, function() {
-        fs.writeFile(file.path, resultData, function(err) {
-          if (err) {
-            console.error(err)
-            return
-          }
+        file.stopWatching = true
+        fileFeed.update({_id: file._id}, file, {}, function() {
+          fs.writeFile(file.path, resultData, function(err) {
+            if (err) {
+              console.error(err)
+              return
+            }
 
-          console.log('writen')
+            console.log('writen')
 
-          file.status = STATUS_DONE
-          file.toSize = resultData.length
-          fileTinify.emit('tinified', file)
+            file.status = STATUS_DONE
+            file.toSize = resultData.length
+            fileTinify.emit('tinified', file)
+          })
         })
       })
     })

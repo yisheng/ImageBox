@@ -25,8 +25,10 @@ fileFeed.update = function(query, update, options, callback) {
   options = options || {}
   var _this = this
   db.update(query, update, options, function(err, numReplaced, newDoc) {
-    console.log(numReplaced)
-    _this.emit('change', {method: 'record-changed'})
+    if (numReplaced) {
+      _this.emit('change', {method: 'record-changed'})
+    }
+
     callback(err, numReplaced, newDoc)
   })
 }
@@ -99,6 +101,11 @@ function watch() {
       }).sort({
         mtime: -1
       }).exec(function(err, existedFile) {
+        if (existedFile && existedFile.stopWatching && (new Date().getTime() - existedFile.updatedAt) < 2000) {
+          fileFeed.emit('skip', existedFile)
+          return
+        }
+
         var stats = fs.statSync(filePath)
         var file = {
           path: filePath,
@@ -107,19 +114,20 @@ function watch() {
           fromSize: stats.size,
           toSize: 0
         }
+        // TODO: Option `upsert`
         if (existedFile) {
           db.update({_id: existedFile._id}, file, {}, function() {
-            fileFeed.emit('change', {method: 'file-changed'})
+            fileFeed.emit('change', {path: filePath, method: 'file-changed'})
           })
         } else {
           db.insert(file, function() {
-            fileFeed.emit('change', {method: 'file-changed'})
+            fileFeed.emit('change', {path: filePath, method: 'file-changed'})
           })
         }
       })
     } else {
       db.remove({path: filePath}, {multi: true}, function() {
-        fileFeed.emit('change', {method: 'file-removed'})
+        fileFeed.emit('change', {path: filePath, method: 'file-removed'})
       })
     }
   })
