@@ -61,7 +61,7 @@ function initIndex() {
       var stats = fs.statSync(filePath)
       db.insert({
         path: filePath,
-        mtime: stats.mtime,
+        mtime: stats.mtime.toISOString(),
         status: STATUS_PENDING,
         fromSize: stats.size,
         toSize: 0
@@ -99,7 +99,7 @@ function watch() {
         var stats = fs.statSync(filePath)
         var file = {
           path: filePath,
-          mtime: stats.mtime,
+          mtime: stats.mtime.toISOString(),
           status: STATUS_PENDING,
           fromSize: stats.size,
           toSize: 0

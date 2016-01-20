@@ -8,24 +8,32 @@
         <li v-for="file in fileList">
           {{ file.path }}<br />
           {{ file.status }}<br />
-          {{ file.mtime }}
+          {{ file.mtime | formatDate }}
         </li>
       </ol>
     </div>
 
     <script src="vue.js"></script>
+    <script src="libs/moment.js"></script>
     <script>
       var model = {
         fileList: []
       }
+
+      Vue.config.debug = true
+
       var vm = new Vue({
         el: '#file-list',
-        data: model
+        data: model,
+        filters: {
+          formatDate: function(v) {
+            return moment(v).format('lll')
+          }
+        }
       })
 
       require('electron').ipcRenderer.on('files', function(event, files) {
         model.fileList = files
-        console.log(files[0].mtime)
       })
     </script>
   </body>

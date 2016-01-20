@@ -7,9 +7,12 @@ global.STATUS_ERROR   = 'error'
 global.STATUS_EXPIRED = 'expired'
 
 var menubar = require('menubar')
-var mb = menubar({preloadWindow:true})
+var mb = menubar({
+  'preloadWindow': true,
+  'always-on-top': true
+})
 var fileFeed = require('./FileFeed')
-// var fileTinify = require('./FileTinify')
+var fileTinify = require('./FileTinify')
 
 var window = null
 
@@ -28,10 +31,5 @@ mb.on('ready', function ready() {
 function renderFileFeed() {
   fileFeed.getAllFiles(function(err, files) {
     window.webContents.send('files', files)
-    console.log(files.length)
-    console.log(files[0].mtime)
-
-    var date = new Date(files[0].mtime)
-    console.log(date)
   })
 }
