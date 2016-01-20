@@ -3,7 +3,7 @@
 const fs = require('fs-plus')
 const EventEmitter = require('events')
 const util = require('util')
-const md5File = require('md5-file')
+const md5 = require('blueimp-md5')
 const NeDB = require('nedb')
 const tinify = require('tinify')
 tinify.key = '_z1t0k4bk8k8pU0lBu9QUWZM8K16QSKR'
@@ -21,12 +21,20 @@ var db = {}
 var isTinifying = false
 var fileTinify = new FileTinify()
 
-fileTinify.on('tinified', function(file, fields) {
-  fileFeed.update({_id: file._id}, fields)
+fileTinify.on('tinified', function(file) {
+  fileFeed.update({_id: file._id}, file)
   doTinify()
 })
 
-// doTinify()
+fileFeed.on('change', function(message) {
+  console.log('FileTinify.js')
+  console.log(message)
+  if (message.method == 'file-changed') {
+    doTinify()
+  }
+})
+
+doTinify()
 
 function initDB() {
   var dbFilePath = 'database/md5.db'
@@ -47,41 +55,52 @@ function doTinify() {
 }
 
 function tinifyFile(file) {
-  console.log(file)
-
   if (!fs.isFileSync(file.path)) {
-    fileTinify.emit('tinified', file, {status: STATUS_EXPIRED})
+    file.status = STATUS_EXPIRED
+    fileTinify.emit('tinified', file)
     return
   }
 
-  db.findOne({md5: md5File(file.path)}, function(err, existedMd5) {
+  var sourceData = fs.readFileSync(file.path)
+  var sourceMd5 = md5(sourceData)
+
+  db.findOne({md5: sourceMd5}, function(err, existedMd5) {
     if (existedMd5) {
-      fileTinify.emit('tinified', file, {status: STATUS_DONE, toSize: file.fromSize})
+      file.status = STATUS_DONE
+      fileTinify.emit('tinified', file)
       return
     }
 
     console.log('tinifying')
-
-    var sourceData = fs.readFileSync(file.path)
-
-    console.log(sourceData.length)
 
     tinify.fromBuffer(sourceData).toBuffer(function(err, resultData) {
       console.log('tinified')
 
       if (err) {
         console.error(err)
-        fileTinify.emit('tinified', file, {status: STATUS_ERROR, errorMessage: err})
+        file.status = STATUS_ERROR
+        file.errorMessage = err
+        fileTinify.emit('tinified', file)
         return
       }
 
-      fs.writeFile(file.path, resultData, function(err) {
-        db.insert({
-          md5: md5File(file.path),
-          size: resultData.length
-        })
+      var resultMd5 = md5(resultData)
+      db.insert({
+        md5: resultMd5,
+        size: resultData.length
+      }, function() {
+        fs.writeFile(file.path, resultData, function(err) {
+          if (err) {
+            console.error(err)
+            return
+          }
 
-        fileTinify.emit('tinified', file, {status: STATUS_DONE, toSize: resultData.length})
+          console.log('writen')
+
+          file.status = STATUS_DONE
+          file.toSize = resultData.length
+          fileTinify.emit('tinified', file)
+        })
       })
     })
   })

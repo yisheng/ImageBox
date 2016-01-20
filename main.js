@@ -23,7 +23,7 @@ mb.on('ready', function ready() {
     renderFileFeed()
   })
 
-  fileFeed.on('change', function() {
+  fileFeed.on('change', function(message) {
     renderFileFeed()
   })
 })

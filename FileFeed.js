@@ -22,8 +22,11 @@ var fileFeed = new FileFeed()
 
 fileFeed.update = function(query, update, options, callback) {
   callback = callback || function () {}
+  options = options || {}
+  var _this = this
   db.update(query, update, options, function(err, numReplaced, newDoc) {
-    this.emit('change')
+    console.log(numReplaced)
+    _this.emit('change', {method: 'record-changed'})
     callback(err, numReplaced, newDoc)
   })
 }
@@ -106,17 +109,17 @@ function watch() {
         }
         if (existedFile) {
           db.update({_id: existedFile._id}, file, {}, function() {
-            fileFeed.emit('change')
+            fileFeed.emit('change', {method: 'file-changed'})
           })
         } else {
           db.insert(file, function() {
-            fileFeed.emit('change')
+            fileFeed.emit('change', {method: 'file-changed'})
           })
         }
       })
     } else {
-      db.update({path: filePath}, {status: STATUS_EXPIRED}, {multi: true}, function() {
-        fileFeed.emit('change')
+      db.remove({path: filePath}, {multi: true}, function() {
+        fileFeed.emit('change', {method: 'file-removed'})
       })
     }
   })

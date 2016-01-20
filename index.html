@@ -1,22 +1,47 @@
 <html>
   <head>
+    <meta charset="utf-8">
     <title>Play Image</title>
+    <link rel="stylesheet" href="libs/bootstrap-3.3.6/css/bootstrap.min.css">
+    <link rel="stylesheet" href="libs/font-awesome-4.5.0/css/font-awesome.min.css">
   </head>
   <body>
-    <div id="file-list">
-      <ol>
-        <li v-for="file in fileList">
-          {{ file.path }}<br />
-          {{ file.status }}<br />
-          {{ file.mtime | formatDate }}
+    <nav class="navbar navbar-default">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle"><i class="fa fa-cog"></i></button>
+          <a class="navbar-brand" href="#">Image Box</a>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container">
+      <ul class="list-group" id="file-list">
+        <li class="list-group-item" v-for="file in fileList">
+          <h5 class="list-group-item-heading">
+            {{ file.path | basename }}
+            <i class="fa fa-spin fa-circle-o-notch text-primary" v-if="file.status == 'pending'"></i>
+            <i class="fa fa-spin fa-cog text-primary" v-if="file.status == 'doing'"></i>
+            <i class="fa fa-check text-success" v-if="file.status == 'done'"></i>
+            <i class="fa fa-ban text-danger" v-if="file.status == 'error'"></i>
+            <i class="fa fa-warning text-warning" v-if="file.status == 'expired'"></i>
+            <span class="text-success" v-if="file.status == 'done'">{{ file | reduced }}</span>
+          </h5>
+          <p class="list-group-item-text">
+            {{ file.mtime | formatDate }}
+          </p>
         </li>
-      </ol>
+      </ul>
     </div>
 
-    <script src="vue.js"></script>
+    <script type="text/javascript">window.$ = window.jQuery = require('./libs/jquery-1.12.0.min.js');</script>
+    <script src="libs/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script src="libs/vue.js"></script>
     <script src="libs/moment.js"></script>
     <script>
-      var model = {
+      const electron = require('electron')
+      const path = require('path')
+      const model = {
         fileList: []
       }
 
@@ -26,15 +51,26 @@
         el: '#file-list',
         data: model,
         filters: {
-          formatDate: function(v) {
-            return moment(v).format('lll')
+          formatDate: function(string) {
+            return moment(string).fromNow()
+          },
+          basename: function(string) {
+            return path.basename(string)
+          },
+          dirname: function(string) {
+            return path.dirname(string)
+          },
+          reduced: function(file) {
+            return file.toSize <= 0 ? '' : ((file.fromSize - file.toSize) / file.fromSize) * 100 + '%'
           }
         }
       })
 
-      require('electron').ipcRenderer.on('files', function(event, files) {
+      electron.ipcRenderer.on('files', function(event, files) {
+        console.log(files[0].path)
         model.fileList = files
       })
     </script>
   </body>
 </html>
+
