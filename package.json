@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "Playing images",
   "dependencies": {
+    "blueimp-md5": "^2.1.0",
     "fs-plus": "^2.8.1",
-    "md5-file": "^2.0.4",
     "menubar": "^3.0.0",
     "nedb": "^1.6.0",
     "tinify": "^1.1.1",
