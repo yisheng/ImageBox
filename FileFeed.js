@@ -45,12 +45,14 @@ fileFeed.getAllFiles = function(callback) {
   db.find({}).sort({mtime: -1}).exec(callback)
 }
 
-config.on('change', function(key, value) {
+config.on('change', function(key, directory) {
   if (key == 'directory') {
-    rootPath = value
+    if (directory == rootPath) {
+      return
+    }
 
+    rootPath = directory
     watcher.close()
-
     initIndex()
     watch()
   }
@@ -71,11 +73,26 @@ function initDB() {
 }
 
 function initIndex() {
+  db.update({
+    $not: {
+      directory: rootPath
+    },
+    status: STATUS_PENDING
+  }, {
+    $set: {
+      status: STATUS_EXPIRED
+    }
+  }, {
+    multi: true
+  })
+
   var files = fs.listTreeSync(rootPath)
+  var docs = []
   files.forEach(function(filePath) {
     if (isFileSupported(filePath)) {
       var stats = fs.statSync(filePath)
-      db.insert({
+      docs.push({
+        directory: rootPath,
         path: filePath,
         mtime: stats.mtime.toISOString(),
         status: STATUS_PENDING,
@@ -83,6 +100,10 @@ function initIndex() {
         toSize: 0
       })
     }
+  })
+
+  db.insert(docs, function() {
+    fileFeed.emit('index')
   })
 }
 
@@ -119,6 +140,7 @@ function watch() {
 
         var stats = fs.statSync(filePath)
         var file = {
+          directory: rootPath,
           path: filePath,
           mtime: stats.mtime.toISOString(),
           status: STATUS_PENDING,
@@ -145,8 +167,11 @@ function watch() {
 
 config.get('directory', function(err, directory) {
   if (directory) {
-    rootPath = directory + '/'
+    if (directory == rootPath) {
+      return
+    }
 
+    rootPath = directory
     initIndex()
     watch()
   }

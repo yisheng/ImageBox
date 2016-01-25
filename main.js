@@ -44,8 +44,8 @@ function chooseDirectory() {
   electron.dialog.showOpenDialog({
     properties: ['openDirectory']
   }, function(directory) {
-    if (!!directory) {
-      config.set('directory', directory['0'])
+    if (directory) {
+      config.set('directory', directory['0'] + '/')
     }
   })
 }

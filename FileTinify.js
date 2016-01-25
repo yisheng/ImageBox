@@ -22,14 +22,21 @@ var isTinifying = false
 var fileTinify = new FileTinify()
 
 fileTinify.on('tinified', function(file) {
+  console.log('on.tinified')
   fileFeed.update({_id: file._id}, file)
   doTinify()
 })
 
 fileFeed.on('change', function(message) {
   if (message.method == 'file-changed') {
+    console.log('on.file-changed')
     doTinify()
   }
+})
+
+fileFeed.on('index', function() {
+  console.log('on.index')
+  doTinify()
 })
 
 fileFeed.on('skip', function(file) {
