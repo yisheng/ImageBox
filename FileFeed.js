@@ -5,19 +5,19 @@ const EventEmitter = require('events')
 const util = require('util')
 const path = require('path')
 const NeDB = require('nedb')
+const config = require('./Config')
 
 function FileFeed() {
   EventEmitter.call(this)
 
   initDB()
-  initIndex()
-  watch()
 }
 
 util.inherits(FileFeed, EventEmitter)
 
-var db = {}
-var defaultPath = '/Users/yisheng/Downloads/images/'
+var db = null
+var rootPath = ''
+var watcher = null
 var fileFeed = new FileFeed()
 
 fileFeed.update = function(query, update, options, callback) {
@@ -45,6 +45,17 @@ fileFeed.getAllFiles = function(callback) {
   db.find({}).sort({mtime: -1}).exec(callback)
 }
 
+config.on('change', function(key, value) {
+  if (key == 'directory') {
+    rootPath = value
+
+    watcher.close()
+
+    initIndex()
+    watch()
+  }
+})
+
 function initDB() {
   var dbFilePath = 'database/file.db'
 
@@ -60,7 +71,7 @@ function initDB() {
 }
 
 function initIndex() {
-  var files = fs.listTreeSync(defaultPath)
+  var files = fs.listTreeSync(rootPath)
   files.forEach(function(filePath) {
     if (isFileSupported(filePath)) {
       var stats = fs.statSync(filePath)
@@ -84,7 +95,7 @@ function watch() {
     "persistent": true,
     "recursive": true
   }
-  var watcher = fs.watch(defaultPath, watcherOptions, function(event, filename) {
+  watcher = fs.watch(rootPath, watcherOptions, function(event, filename) {
     if (!filename) {
       return
     }
@@ -92,9 +103,9 @@ function watch() {
       return
     }
 
-    console.log('File changed. Event: ' + event + ' Filename: ' + defaultPath + filename)
+    console.log('File changed. Event: ' + event + ' Filename: ' + rootPath + filename)
 
-    var filePath = defaultPath + filename
+    var filePath = rootPath + filename
     if (fs.isFileSync(filePath)) {
       db.findOne({
         path: filePath
@@ -131,5 +142,14 @@ function watch() {
     }
   })
 }
+
+config.get('directory', function(err, directory) {
+  if (directory) {
+    rootPath = directory + '/'
+
+    initIndex()
+    watch()
+  }
+})
 
 module.exports = fileFeed
