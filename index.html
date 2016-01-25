@@ -7,10 +7,16 @@
   </head>
   <body>
     <nav class="navbar navbar-default">
-      <div class="container-fluid">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle"><i class="fa fa-cog"></i></button>
+      <div class="container-fluid" id="config">
+        <div class="navbar-header dropdown">
+          <button type="button" class="navbar-toggle dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+            <i class="fa fa-cog"></i>
+          </button>
           <a class="navbar-brand" href="#">Image Box</a>
+          <ul class="dropdown-menu" aria-labelledby="dropdownMenu1" style="right: 0;left: auto;margin-top: -6px;margin-right: 13px;">
+            <li><a href="javascript:;" v-on:click="chooseDirectory">Choose Directory</a></li>
+            <li><a href="javascript:;" v-on:click="fork">Fork Me</a></li>
+          </ul>
         </div>
       </div>
     </nav>
@@ -41,15 +47,16 @@
     <script>
       const electron = require('electron')
       const path = require('path')
-      const model = {
+      var fileModel = {
         fileList: []
       }
+      var configModel = {}
 
       Vue.config.debug = true
 
-      var vm = new Vue({
+      var vFile = new Vue({
         el: '#file-list',
-        data: model,
+        data: fileModel,
         filters: {
           formatDate: function(string) {
             return moment(string).fromNow()
@@ -66,9 +73,25 @@
         }
       })
 
+      var vConfig = new Vue({
+        el: '#config',
+        data: configModel,
+        methods: {
+          chooseDirectory: function() {
+            electron.ipcRenderer.send('chooseDirectory')
+          },
+          fork: function() {
+            electron.shell.openExternal('https://github.com/yisheng/ImageBox')
+          }
+        }
+      })
+
       electron.ipcRenderer.on('files', function(event, files) {
-        console.log(files[0].path)
-        model.fileList = files
+        fileModel.fileList = files
+      })
+
+      electron.ipcRenderer.on('config', function(event, config) {
+        console.log(config)
       })
     </script>
   </body>
