@@ -15,15 +15,36 @@ var db = {}
 var config = new Config()
 
 config.getAll = function(callback) {
-  db.find({}, callback)
+  callback = callback || function () {}
+  db.find({}, function(err, items) {
+    if (items) {
+      var configs = {}
+      items.forEach(function(config) {
+        configs[config.k] = config.v
+      })
+
+      items = configs
+    }
+
+    callback(err, items)
+  })
 }
 
 config.get = function(key, callback) {
-  db.findOne({k: key}, callback)
+  callback = callback || function () {}
+  db.findOne({k: key}, function(err, config) {
+    callback(err, (config ? config.v : config))
+  })
 }
 
 config.set = function(key, value, callback) {
-  db.update({k: key}, {k: key, v: value}, {upsert: true}, callback)
+  callback = callback || function () {}
+  db.update({k: key}, {k: key, v: value}, {upsert: true}, function(err, number) {
+    if (number > 0) {
+      config.emit('change', key, value)
+    }
+    callback(err, number)
+  })
 }
 
 function initDB() {
