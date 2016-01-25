@@ -30,16 +30,22 @@ mb.on('ready', function ready() {
   })
 
   electron.ipcMain.on('chooseDirectory', function(event) {
-    electron.dialog.showOpenDialog({
-      properties: ['openDirectory']
-    }, function(directory) {
-      console.log(directory)
-    })
+    chooseDirectory()
   })
 })
 
 function renderFileFeed() {
   fileFeed.getAllFiles(function(err, files) {
     window.webContents.send('files', files)
+  })
+}
+
+function chooseDirectory() {
+  electron.dialog.showOpenDialog({
+    properties: ['openDirectory']
+  }, function(directory) {
+    if (!!directory) {
+      config.set('directory', directory['0'])
+    }
   })
 }
