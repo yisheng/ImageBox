@@ -6,13 +6,14 @@ global.STATUS_DONE    = 'done'
 global.STATUS_ERROR   = 'error'
 global.STATUS_EXPIRED = 'expired'
 
-var menubar = require('menubar')
-var mb = menubar({
+const menubar = require('menubar')
+const mb = menubar({
   'preloadWindow': true,
   'always-on-top': true
 })
-var fileFeed = require('./FileFeed')
-var fileTinify = require('./FileTinify')
+const fileFeed = require('./FileFeed')
+const fileTinify = require('./FileTinify')
+const electron = require('electron')
 
 var window = null
 
@@ -25,6 +26,14 @@ mb.on('ready', function ready() {
 
   fileFeed.on('change', function(message) {
     renderFileFeed()
+  })
+
+  electron.ipcMain.on('chooseDirectory', function(event) {
+    electron.dialog.showOpenDialog({
+      properties: ['openDirectory']
+    }, function(directory) {
+      console.log(directory)
+    })
   })
 })
 
