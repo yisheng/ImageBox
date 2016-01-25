@@ -7,6 +7,8 @@ An application who keeps your images [tinified](https://tinypng.com/).
 
 # TODO
 
+- Status Machine in FileTinify Module
+
 - Syncing directory configration
 - Preserve file index
     * Preserver `fromSize` attribution
