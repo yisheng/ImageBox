@@ -114,7 +114,6 @@ function watch() {
           fromSize: stats.size,
           toSize: 0
         }
-        // TODO: Option `upsert`
         if (existedFile) {
           db.update({_id: existedFile._id}, file, {}, function() {
             fileFeed.emit('change', {path: filePath, method: 'file-changed'})

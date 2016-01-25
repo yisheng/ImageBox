@@ -37,8 +37,6 @@ fileFeed.on('skip', function(file) {
   fileFeed.update({_id: file._id}, file)
 })
 
-doTinify()
-
 function initDB() {
   var dbFilePath = 'database/md5.db'
 
@@ -112,5 +110,7 @@ function tinifyFile(file) {
     })
   })
 }
+
+doTinify()
 
 module.exports = fileTinify
