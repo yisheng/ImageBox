@@ -14,16 +14,16 @@ util.inherits(Config, EventEmitter)
 var db = {}
 var config = new Config()
 
-config.getAllConfig = function() {
-  
+config.getAll = function(callback) {
+  db.find({}, callback)
 }
 
-config.getConfig = function(key) {
-  
+config.get = function(key, callback) {
+  db.findOne({k: key}, callback)
 }
 
-config.setConfig = function(key, value) {
-  
+config.set = function(key, value, callback) {
+  db.update({k: key}, {k: key, v: value}, {upsert: true}, callback)
 }
 
 function initDB() {

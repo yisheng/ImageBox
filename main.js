@@ -13,6 +13,7 @@ const mb = menubar({
 })
 const fileFeed = require('./FileFeed')
 const fileTinify = require('./FileTinify')
+const config = require('./Config')
 const electron = require('electron')
 
 var window = null
