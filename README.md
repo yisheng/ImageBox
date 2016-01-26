@@ -21,6 +21,7 @@ An application who keeps your images [tinified](https://tinypng.com/).
 - Index all the files in the given directory
 - Watch file changes in the given directory
 - Tinify indexed files one by one
+- Preserve md5 hash of tinified files to avoid re-tinifing
 - UI with VueJS
 - Config Module
 - Config the syncing directory
