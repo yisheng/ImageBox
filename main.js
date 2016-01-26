@@ -29,6 +29,10 @@ mb.on('ready', function ready() {
     renderFileFeed()
   })
 
+  fileFeed.on('index', function() {
+    renderFileFeed()
+  })
+
   electron.ipcMain.on('chooseDirectory', function(event) {
     chooseDirectory()
   })

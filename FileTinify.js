@@ -23,6 +23,7 @@ var fileTinify = new FileTinify()
 
 fileTinify.on('tinified', function(file) {
   console.log('on.tinified')
+  isTinifying = false
   fileFeed.update({_id: file._id}, file)
   doTinify()
 })
@@ -55,9 +56,17 @@ function initDB() {
 }
 
 function doTinify() {
+  if (isTinifying) {
+    console.log('skipped on `doTinify`')
+    return
+  }
+
+  isTinifying = true
   fileFeed.getNextFile(function(err, file) {
     if (file) {
       tinifyFile(file)
+    } else {
+      isTinifying = false
     }
   })
 }
