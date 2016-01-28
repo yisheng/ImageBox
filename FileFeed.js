@@ -102,6 +102,11 @@ function initIndex() {
     }
   })
 
+  // TODO
+  // 1. 检索所有历史数据
+  // 2. 对比现有文件和历史文件，依据 mtime 提取出差异文件
+  // 3. 置变化的文件为过期，然后添加缺失的文件
+
   db.insert(docs, function() {
     fileFeed.emit('index')
   })
