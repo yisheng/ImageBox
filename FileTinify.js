@@ -91,6 +91,9 @@ function tinifyFile(file) {
 
     console.log('tinifying')
 
+    var keys = ["f3g_x_TBFSRRHGhUf3NoNWsyoArM9Qzo", "_z1t0k4bk8k8pU0lBu9QUWZM8K16QSKR"]
+    tinify.key = keys[Math.floor(Math.random() * keys.length)]
+
     tinify.fromBuffer(sourceData).toBuffer(function(err, resultData) {
       console.log('tinified')
 
